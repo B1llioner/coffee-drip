@@ -12,7 +12,7 @@
     "dev:web": "npm run dev -w @algi/web",
     "build": "npm run build -w @algi/database && npm run build -w @algi/api && npm run build -w @algi/web",
     "test": "npm run test -w @algi/api",
-    "lint": "npm run lint -w @algi/api && npm run lint -w @algi/web",
+    "lint": "npm run build -w @algi/database && npm run lint -w @algi/api && npm run lint -w @algi/web",
     "db:generate": "npm run generate -w @algi/database",
     "db:migrate": "npm run migrate:dev -w @algi/database",
     "db:migrate:deploy": "npm run migrate:deploy -w @algi/database",
