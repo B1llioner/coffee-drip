@@ -1,0 +1,52 @@
+services:
+  proxy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment: [SITE_DOMAIN]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [web, api]
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      args: { NEXT_PUBLIC_API_URL: /api/v1 }
+    restart: unless-stopped
+    environment: [API_URL=http://api:4000/api/v1]
+    depends_on: { api: { condition: service_healthy } }
+  api:
+    build: { context: .., dockerfile: apps/api/Dockerfile }
+    restart: unless-stopped
+    env_file: ../.env.production
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck: { test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/healthz').then(r=>{if(!r.ok)process.exit(1)})"], interval: 20s, timeout: 5s, retries: 5 }
+  migrate:
+    build: { context: .., dockerfile: apps/api/Dockerfile }
+    env_file: ../.env.production
+    command: ["./node_modules/.bin/prisma", "migrate", "deploy", "--schema", "packages/database/prisma/schema.prisma"]
+    depends_on: { postgres: { condition: service_healthy } }
+    restart: "no"
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: ../.env.production
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-algi}
+      POSTGRES_USER: ${POSTGRES_USER:-algi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"], interval: 10s, timeout: 5s, retries: 10 }
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redis_data:/data]
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 10s, timeout: 3s, retries: 10 }
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:

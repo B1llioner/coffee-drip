@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.next/
+.env
+.env.local
+!.env.production.example
+coverage/
+*.log
+*.tsbuildinfo
+.DS_Store
+packages/database/prisma/dev.db
+
+# Исходные дизайн-прототипы не входят в production-репозиторий.
+*.dc.html
+BACKEND_PROMPT.md
+support.js

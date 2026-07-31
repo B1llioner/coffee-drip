@@ -1,0 +1,17 @@
+CREATE TYPE "DiscountType" AS ENUM ('PERCENT', 'FIXED');
+CREATE TYPE "RefundStatus" AS ENUM ('PENDING', 'SUCCEEDED', 'FAILED');
+ALTER TABLE "orders" ADD COLUMN "discount_kopecks" INTEGER NOT NULL DEFAULT 0, ADD COLUMN "promo_code" TEXT;
+CREATE TABLE "promotions" ("id" UUID NOT NULL, "code" TEXT NOT NULL, "discount_type" "DiscountType" NOT NULL, "discount_value" INTEGER NOT NULL, "min_subtotal_kopecks" INTEGER NOT NULL DEFAULT 0, "starts_at" TIMESTAMP(3), "ends_at" TIMESTAMP(3), "max_uses" INTEGER, "used_count" INTEGER NOT NULL DEFAULT 0, "is_active" BOOLEAN NOT NULL DEFAULT true, "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP(3) NOT NULL, CONSTRAINT "promotions_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "promotions_code_key" ON "promotions"("code");
+CREATE INDEX "promotions_is_active_starts_at_ends_at_idx" ON "promotions"("is_active","starts_at","ends_at");
+CREATE TABLE "shipments" ("id" UUID NOT NULL, "order_id" UUID NOT NULL, "provider" TEXT NOT NULL, "status" TEXT NOT NULL, "external_id" TEXT, "tracking_number" TEXT, "tracking_url" TEXT, "raw_response" JSONB, "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP(3) NOT NULL, CONSTRAINT "shipments_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "shipments_order_id_key" ON "shipments"("order_id");
+CREATE UNIQUE INDEX "shipments_external_id_key" ON "shipments"("external_id");
+CREATE INDEX "shipments_status_created_at_idx" ON "shipments"("status","created_at");
+CREATE TABLE "refunds" ("id" UUID NOT NULL, "order_id" UUID NOT NULL, "payment_id" UUID NOT NULL, "external_id" TEXT, "idempotency_key" TEXT NOT NULL, "amount_kopecks" INTEGER NOT NULL, "status" "RefundStatus" NOT NULL DEFAULT 'PENDING', "reason" TEXT, "raw_response" JSONB, "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updated_at" TIMESTAMP(3) NOT NULL, CONSTRAINT "refunds_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "refunds_external_id_key" ON "refunds"("external_id");
+CREATE UNIQUE INDEX "refunds_idempotency_key_key" ON "refunds"("idempotency_key");
+CREATE INDEX "refunds_order_id_status_idx" ON "refunds"("order_id","status");
+ALTER TABLE "shipments" ADD CONSTRAINT "shipments_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "refunds" ADD CONSTRAINT "refunds_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "refunds" ADD CONSTRAINT "refunds_payment_id_fkey" FOREIGN KEY ("payment_id") REFERENCES "payments"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

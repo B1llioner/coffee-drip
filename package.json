@@ -1,0 +1,40 @@
+{
+  "name": "algi-coffee",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @algi/web",
+    "dev:api": "npm run dev -w @algi/api",
+    "dev:web": "npm run dev -w @algi/web",
+    "build": "npm run build -w @algi/database && npm run build -w @algi/api && npm run build -w @algi/web",
+    "test": "npm run test -w @algi/api",
+    "lint": "npm run lint -w @algi/api && npm run lint -w @algi/web",
+    "db:generate": "npm run generate -w @algi/database",
+    "db:migrate": "npm run migrate:dev -w @algi/database",
+    "db:migrate:deploy": "npm run migrate:deploy -w @algi/database",
+    "db:seed": "npm run seed -w @algi/database",
+    "infra:up": "docker compose up -d postgres redis",
+    "infra:down": "docker compose down"
+  },
+  "engines": {
+    "node": "^20.11.1 || >=22"
+  },
+  "overrides": {
+    "@nestjs/platform-fastify": {
+      "@fastify/static": "10.1.2"
+    },
+    "@nestjs/swagger": {
+      "@fastify/static": "10.1.2",
+      "js-yaml": "5.2.2"
+    },
+    "ajv": "8.20.0",
+    "fastify": "5.11.0",
+    "find-my-way": "9.7.0",
+    "postcss": "8.5.25",
+    "sharp": "0.35.3"
+  }
+}
